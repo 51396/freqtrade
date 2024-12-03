@@ -201,8 +201,8 @@ class Exchange:
         # Timestamp of last markets refresh
         self._last_markets_refresh: int = 0
 
-        # Cache for 10 minutes ...
         self._cache_lock = Lock()
+        # Cache for 10 minutes ...
         self._fetch_tickers_cache: TTLCache = TTLCache(maxsize=2, ttl=60 * 10)
         # Cache values for 300 to avoid frequent polling of the exchange for prices
         # Caching only applies to RPC methods, so prices for open trades are still
@@ -532,6 +532,7 @@ class Exchange:
     def market_is_future(self, market: dict[str, Any]) -> bool:
         return (
             market.get(self._ft_has["ccxt_futures_name"], False) is True
+            and market.get("type", False) == "swap"
             and market.get("linear", False) is True
         )
 
@@ -1669,6 +1670,7 @@ class Exchange:
             balances.pop("total", None)
             balances.pop("used", None)
 
+            self._log_exchange_response("fetch_balances", balances)
             return balances
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
@@ -1779,7 +1781,7 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def fetch_bids_asks(self, symbols: list[str] | None = None, cached: bool = False) -> dict:
+    def fetch_bids_asks(self, symbols: list[str] | None = None, *, cached: bool = False) -> dict:
         """
         :param symbols: List of symbols to fetch
         :param cached: Allow cached result
@@ -1812,8 +1814,9 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
         """
+        :param symbols: List of symbols to fetch
         :param cached: Allow cached result
         :return: fetch_tickers result
         """
@@ -2254,8 +2257,9 @@ class Exchange:
         :param pair: Pair to download
         :param timeframe: Timeframe to get data for
         :param since_ms: Timestamp in milliseconds to get history from
-        :param until_ms: Timestamp in milliseconds to get history up to
         :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param is_new_pair: used by binance subclass to allow "fast" new pair downloading
+        :param until_ms: Timestamp in milliseconds to get history up to
         :return: Dataframe with candle (OHLCV) data
         """
         pair, _, _, data, _ = self.loop.run_until_complete(
@@ -2264,11 +2268,10 @@ class Exchange:
                 timeframe=timeframe,
                 since_ms=since_ms,
                 until_ms=until_ms,
-                is_new_pair=is_new_pair,
                 candle_type=candle_type,
             )
         )
-        logger.info(f"Downloaded data for {pair} with length {len(data)}.")
+        logger.debug(f"Downloaded data for {pair} from ccxt with length {len(data)}.")
         return ohlcv_to_dataframe(data, timeframe, pair, fill_missing=False, drop_incomplete=True)
 
     async def _async_get_historic_ohlcv(
@@ -2277,13 +2280,11 @@ class Exchange:
         timeframe: str,
         since_ms: int,
         candle_type: CandleType,
-        is_new_pair: bool = False,
         raise_: bool = False,
         until_ms: int | None = None,
     ) -> OHLCVResponse:
         """
         Download historic ohlcv
-        :param is_new_pair: used by binance subclass to allow "fast" new pair downloading
         :param candle_type: Any of the enum CandleType (must match trading mode!)
         """
 
