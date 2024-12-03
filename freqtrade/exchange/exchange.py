@@ -173,12 +173,14 @@ class Exchange:
         exchange_config: ExchangeConfig | None = None,
         validate: bool = True,
         load_leverage_tiers: bool = False,
+        market_local: bool = False,
     ) -> None:
         """
         Initializes this module with the given config,
         it does basic validation whether the specified exchange and pairs are valid.
         :return: None
         """
+        self._markets_local = market_local
         self._api: ccxt.Exchange
         self._api_async: ccxt_pro.Exchange
         self._ws_async: ccxt_pro.Exchange = None
@@ -420,7 +422,11 @@ class Exchange:
         """exchange ccxt markets"""
         if not self._markets:
             logger.info("Markets were not loaded. Loading them now..")
-            self.reload_markets(True)
+            if self._markets_local:
+                logger.info("Markets were not loaded. Loading them from local..")
+                self.reload_markets_local()
+            else:
+                self.reload_markets(True)
         return self._markets
 
     @property
@@ -683,6 +689,13 @@ class Exchange:
                 self.fill_leverage_tiers()
         except (ccxt.BaseError, TemporaryError):
             logger.exception("Could not load markets.")
+
+    def reload_markets_local(self):
+        from pathlib import Path
+        from freqtrade.misc import deep_merge_dicts, json_load
+        markets_swap = self._config.get("user_data_dir") /  "markets_swap.txt"
+        with markets_swap.open() as json_file:
+            self._markets = json_load(json_file)
 
     def validate_stakecurrency(self, stake_currency: str) -> None:
         """

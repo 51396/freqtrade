@@ -21,7 +21,7 @@ from freqtrade.enums import HyperoptState
 from freqtrade.exceptions import OperationalException
 from freqtrade.misc import deep_merge_dicts
 from freqtrade.optimize.backtesting import Backtesting
-
+from freqtrade.exchange.binance import Binance
 # Import IHyperOptLoss to allow unpickling classes from these modules
 from freqtrade.optimize.hyperopt.hyperopt_auto import HyperOptAuto
 from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
@@ -62,7 +62,9 @@ class HyperOptimizer:
         self.min_date: datetime
         self.max_date: datetime
 
-        self.backtesting = Backtesting(self.config)
+        self.exchange = Binance(config=config, market_local=config.get("hyperopt_local"), validate=False,
+                           load_leverage_tiers=True)
+        self.backtesting = Backtesting(self.config,self.exchange)
         self.pairlist = self.backtesting.pairlists.whitelist
         self.custom_hyperopt: HyperOptAuto
         self.analyze_per_epoch = self.config.get("analyze_per_epoch", False)

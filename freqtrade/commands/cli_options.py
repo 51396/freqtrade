@@ -228,6 +228,12 @@ AVAILABLE_CLI_OPTIONS = {
         default=constants.BACKTEST_CACHE_DEFAULT,
         choices=constants.BACKTEST_CACHE_AGE,
     ),
+    "backtest_local": Arg(
+        "--local",
+        help="exec backtest task without network.",
+        action="store_true",
+        default=False,
+    ),
     # Edge
     "stoploss_range": Arg(
         "--stoplosses",
@@ -343,6 +349,12 @@ AVAILABLE_CLI_OPTIONS = {
         help="Hyperopt result filename."
         "Example: `--hyperopt-filename=hyperopt_results_2020-09-27_16-20-48.pickle`",
         metavar="FILENAME",
+    ),
+    "hyperopt_local": Arg(
+        "--local",
+        help="exec hyperopt task without network.",
+        action="store_true",
+        default=False,
     ),
     # List exchanges
     "print_one_column": Arg(

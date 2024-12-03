@@ -276,3 +276,22 @@ class Binance(Exchange):
         if not t:
             return [], "0"
         return t, from_id
+
+    def reload_markets_local(self):
+        from ccxt.binance import binance as cb
+        from pathlib import Path
+        from freqtrade.misc import deep_merge_dicts, json_load
+        markets_swap = self._config.get("user_data_dir") / "markets_swap.txt"
+        logger.info(f"local file path is {markets_swap}")
+        with markets_swap.open() as file:
+            markets = []
+            value = cb.safe_value([json_load(file)] , 0)
+            resultMarkets = cb().safe_list_2(value, 'symbols', 'optionSymbols', [])
+            markets = cb.array_concat(markets, resultMarkets)
+            result = []
+            for i in range(0, len(markets)):
+                result.append(cb().parse_market(markets[i]))
+            result_map = {m.get("symbol"): m for m in result}
+            self._markets = result_map
+
+

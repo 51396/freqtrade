@@ -57,7 +57,11 @@ def start_backtesting(args: dict[str, Any]) -> None:
     logger.info("Starting freqtrade in Backtesting mode")
 
     # Initialize backtesting object
-    backtesting = Backtesting(config)
+    from freqtrade.exchange.binance import Binance
+    exchange = Binance(config=config, market_local=config.get("backtest_local"), validate=False, load_leverage_tiers=True)
+    exchange.get_markets()
+    backtesting = Backtesting(config, exchange)
+    # backtesting = Backtesting(config)
     backtesting.start()
 
 

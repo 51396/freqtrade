@@ -45,6 +45,7 @@ ARGS_BACKTEST = ARGS_COMMON_OPTIMIZE + [
     "exportfilename",
     "backtest_breakdown",
     "backtest_cache",
+    "backtest_local",
     "freqai_backtest_live_models",
 ]
 
@@ -67,6 +68,7 @@ ARGS_HYPEROPT = ARGS_COMMON_OPTIMIZE + [
     "disableparamexport",
     "hyperopt_ignore_missing_space",
     "analyze_per_epoch",
+    "hyperopt_local",
 ]
 
 ARGS_EDGE = ARGS_COMMON_OPTIMIZE + ["stoploss_range"]

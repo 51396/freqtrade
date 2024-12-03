@@ -299,6 +299,7 @@ class Configuration:
             ("export", "Parameter --export detected: {} ..."),
             ("backtest_breakdown", "Parameter --breakdown detected ..."),
             ("backtest_cache", "Parameter --cache={} detected ..."),
+            ("backtest_local", "Parameter --local detected ..."),
             ("disableparamexport", "Parameter --disableparamexport detected: {} ..."),
             ("freqai_backtest_live_models", "Parameter --freqai-backtest-live-models detected ..."),
         ]
